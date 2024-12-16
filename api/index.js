@@ -6,8 +6,37 @@ const app = express();
 const port = process.env.PORT || 8000;
 
 // Middleware
-app.use(cors());
+
+// app.use(
+//   cors({
+//     origin: [
+//       'https://repliq-rakib.vercel.app',
+//       'http://localhost:3000',
+//       'http://localhost:3001',
+//     ],
+//   })
+// );
+
+const allowedOrigins = [
+  'https://repliq-rakib.vercel.app',
+  'http://localhost:3000',
+];
+
+const corsOptionsDelegate = function (req, callback) {
+  const origin = req.header('Origin');
+
+  let corsOptions;
+  if (allowedOrigins.indexOf(origin) !== -1) {
+    corsOptions = { origin: true, credentials: true };
+  } else {
+    corsOptions = { origin: false };
+  }
+  callback(null, corsOptions);
+};
+
 app.use(express.json());
+app.options('*', cors(corsOptionsDelegate));
+app.use(cors(corsOptionsDelegate));
 
 app.get('/', (req, res) => {
   res.send('Server is alive!!!');
@@ -56,6 +85,7 @@ async function run() {
     app.post('/cart', async (req, res) => {
       try {
         const { userId, item } = req.body;
+
         if (!userId || !item || !item.idMeal) {
           return res.status(400).send({
             success: false,
